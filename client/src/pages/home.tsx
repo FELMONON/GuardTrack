@@ -42,7 +42,7 @@ export default function Home() {
 
   // Get recent visits for each site
   const { data: recentVisits = [] } = useQuery<(PatrolLog & { site: PatrolSite })[]>({
-    queryKey: ['/api/recent-visits', deviceId],
+    queryKey: [`/api/recent-visits?deviceId=${deviceId}`],
     enabled: !!deviceId,
   });
 

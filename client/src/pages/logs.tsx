@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { formatDistanceToNow } from "date-fns";
 import { LogIn, LogOut, MapPin, Clock, Wifi, WifiOff } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Logs() {
   const [deviceId] = useState(() => localStorage.getItem('patrol-device-id') || '');
@@ -15,6 +16,10 @@ export default function Logs() {
 
   const { data: logs = [], isLoading: logsLoading } = useQuery<PatrolLog[]>({
     queryKey: ['/api/patrol-logs', deviceId],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/patrol-logs?deviceId=${deviceId}`);
+      return await response.json();
+    },
     enabled: !!deviceId,
   });
 
