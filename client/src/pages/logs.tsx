@@ -68,9 +68,9 @@ export default function Logs() {
 
       <main className="px-4 py-4 pb-24">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium">Patrol Logs</h2>
+          <h2 className="text-lg font-medium">Patrol Sessions</h2>
           <span className="text-xs text-gray-400 surface-container px-2 py-1 rounded">
-            {logs.length} entries
+            {sessions.length} sessions
           </span>
         </div>
 
@@ -79,23 +79,23 @@ export default function Logs() {
           <CardContent className="p-4">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-xl font-bold text-white">{logs.filter(l => l.action === 'enter').length}</p>
-                <p className="text-xs text-gray-400">Entries</p>
+                <p className="text-xl font-bold text-white">{sessions.filter(s => s.exitTime).length}</p>
+                <p className="text-xs text-gray-400">Completed</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-white">{logs.filter(l => l.action === 'exit').length}</p>
-                <p className="text-xs text-gray-400">Exits</p>
+                <p className="text-xl font-bold text-white">{sessions.filter(s => !s.exitTime).length}</p>
+                <p className="text-xs text-gray-400">Active</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-white">{new Set(logs.map(l => l.siteId)).size}</p>
+                <p className="text-xl font-bold text-white">{new Set(sessions.map(s => s.siteId)).size}</p>
                 <p className="text-xs text-gray-400">Sites</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Logs List */}
-        {logsLoading ? (
+        {/* Sessions List */}
+        {sessionsLoading ? (
           <div className="space-y-3">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="surface-variant rounded-lg p-4 material-shadow animate-pulse">
@@ -110,7 +110,7 @@ export default function Logs() {
               </div>
             ))}
           </div>
-        ) : logs.length === 0 ? (
+        ) : sessions.length === 0 ? (
           <Card className="surface-variant border-0">
             <CardContent className="p-8 text-center">
               <Clock className="h-12 w-12 text-gray-500 mx-auto mb-4" />
