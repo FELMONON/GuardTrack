@@ -6,18 +6,19 @@ import BottomNavigation from "@/components/bottom-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { usePatrolSessions } from "@/hooks/use-patrol-sessions";
 import { formatDistanceToNow } from "date-fns";
-import { MapPin, Clock, Timer, CheckCircle } from "lucide-react";
+import { MapPin, Clock, Timer, CheckCircle, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Logs() {
   const [deviceId] = useState(() => localStorage.getItem('patrol-device-id') || '');
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
+  const { getAllSessions, clearAllSessions, formatMilitaryTime } = usePatrolSessions(deviceId);
 
-  const { data: sessions = [], isLoading: sessionsLoading } = useQuery<(PatrolSession & { site: PatrolSite })[]>({
-    queryKey: [`/api/patrol-sessions?deviceId=${deviceId}`],
-    enabled: !!deviceId,
-  });
+  // Get sessions from local storage instead of API
+  const sessions = getAllSessions();
+  const sessionsLoading = false;
 
   const { data: sites = [] } = useQuery<PatrolSite[]>({
     queryKey: ['/api/patrol-sites'],

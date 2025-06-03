@@ -6,7 +6,7 @@ import BottomNavigation from "@/components/bottom-navigation";
 import PatrolSiteCard from "@/components/patrol-site-card";
 import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/use-geolocation";
-import { useOfflineStorage } from "@/hooks/use-offline-storage";
+import { usePatrolSessions } from "@/hooks/use-patrol-sessions";
 import { calculateDistance, isWithinGeofence } from "@/lib/geofencing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ export default function Home() {
 
   const { toast } = useToast();
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
-  const { storeLogs, syncOfflineLogs } = useOfflineStorage();
+  const { startSession, endSession, getActiveSession, getAllSessions, sessions } = usePatrolSessions(deviceId);
 
   // Initialize default sites
   const initSitesMutation = useMutation({
@@ -75,8 +75,20 @@ export default function Home() {
       try {
         return await apiRequest('POST', '/api/patrol-action', logData);
       } catch (error) {
-        // Store offline if API fails
-        await storeLogs([{ ...logData, timestamp: new Date() }]);
+        // Store session offline if API fails
+        const sessionData = {
+          ...logData,
+          entryTime: new Date(),
+          exitTime: action === 'exit' ? new Date() : null,
+          isActive: action === 'enter',
+          id: Date.now() // temporary ID
+        };
+        
+        // Store in localStorage for persistence
+        const existingSessions = JSON.parse(localStorage.getItem('offline-patrol-sessions') || '[]');
+        existingSessions.push(sessionData);
+        localStorage.setItem('offline-patrol-sessions', JSON.stringify(existingSessions));
+        
         throw error;
       }
     },
