@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Map, ClipboardList, Download, Settings } from "lucide-react";
+import { Home, Map, ClipboardList, Moon, Settings } from "lucide-react";
 
 interface BottomNavigationProps {
   currentRoute: string;

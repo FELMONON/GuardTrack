@@ -8,6 +8,7 @@ import Map from "@/pages/map";
 import Logs from "@/pages/logs";
 import Export from "@/pages/export";
 import Settings from "@/pages/settings";
+import ShiftSummary from "@/pages/shift-summary";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/map" component={Map} />
       <Route path="/logs" component={Logs} />
+      <Route path="/shift" component={ShiftSummary} />
       <Route path="/export" component={Export} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
