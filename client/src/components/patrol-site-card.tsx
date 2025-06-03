@@ -1,4 +1,4 @@
-import { PatrolSite, PatrolLog } from "@shared/schema";
+import { PatrolSite, PatrolSession } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Route } from "lucide-react";
@@ -8,7 +8,7 @@ interface PatrolSiteCardProps {
   site: PatrolSite & { distance: number; isWithinGeofence: boolean };
   distance: number;
   isWithinGeofence: boolean;
-  lastVisit?: PatrolLog;
+  lastVisit?: PatrolSession;
   onEnter: () => void;
   onExit: () => void;
   isLoading: boolean;
@@ -33,11 +33,11 @@ export default function PatrolSiteCard({
   const getLastVisitText = () => {
     if (!lastVisit) return "Never";
     
-    const timeDiff = Date.now() - new Date(lastVisit.timestamp).getTime();
+    const timeDiff = Date.now() - new Date(lastVisit.entryTime).getTime();
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
     
     if (days === 0) {
-      return formatDistanceToNow(new Date(lastVisit.timestamp), { addSuffix: true });
+      return formatDistanceToNow(new Date(lastVisit.entryTime), { addSuffix: true });
     } else if (days === 1) {
       return "Yesterday";
     } else if (days < 7) {
@@ -66,7 +66,7 @@ export default function PatrolSiteCard({
       };
     }
     
-    const hoursSinceVisit = (Date.now() - new Date(lastVisit.timestamp).getTime()) / (1000 * 60 * 60);
+    const hoursSinceVisit = (Date.now() - new Date(lastVisit.entryTime).getTime()) / (1000 * 60 * 60);
     
     if (hoursSinceVisit < 24) {
       return {
