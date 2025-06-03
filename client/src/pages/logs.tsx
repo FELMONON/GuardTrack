@@ -114,80 +114,64 @@ export default function Logs() {
           <Card className="surface-variant border-0">
             <CardContent className="p-8 text-center">
               <Clock className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-              <h3 className="font-medium text-white mb-2">No Logs Yet</h3>
+              <h3 className="font-medium text-white mb-2">No Sessions Yet</h3>
               <p className="text-sm text-gray-400">
-                Start patrolling sites to see your activity logs here.
+                Start patrolling sites to see your activity sessions here.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {(() => {
-              // Group logs by site and date for better readability
-              const groupedLogs = logs.reduce((groups: any, log) => {
-                const date = new Date(log.timestamp).toDateString();
-                const siteId = log.siteId;
-                const key = `${siteId}-${date}`;
-                
-                if (!groups[key]) {
-                  groups[key] = {
-                    siteId,
-                    siteName: getSiteName(siteId),
-                    siteAddress: getSiteAddress(siteId),
-                    date,
-                    logs: []
-                  };
-                }
-                groups[key].logs.push(log);
-                return groups;
-              }, {});
-
-              return Object.values(groupedLogs).map((group: any) => (
-                <Card key={`${group.siteId}-${group.date}`} className="surface-variant border-0">
+          <div className="space-y-3">
+            {sessions.map((session) => {
+              const SessionIcon = getSessionIcon(session);
+              const siteName = session.site?.name || `Site #${session.siteId}`;
+              const siteAddress = session.site?.address || 'Unknown address';
+              
+              return (
+                <Card key={session.id} className="surface-variant border-0">
                   <CardContent className="p-4">
-                    <div className="mb-3">
-                      <h4 className="font-medium text-white">{group.siteName}</h4>
-                      <p className="text-xs text-gray-300">{group.siteAddress}</p>
-                      <p className="text-xs text-gray-400">{group.date}</p>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      {group.logs.map((log: any) => {
-                        const timestamp = new Date(log.timestamp);
-                        const militaryTime = timestamp.toLocaleTimeString('en-GB', { 
-                          hour12: false,
-                          hour: '2-digit', 
-                          minute: '2-digit'
-                        });
+                    <div className="flex items-start space-x-3">
+                      <div className={`p-2 rounded-full ${getSessionColor(session)}`}>
+                        <SessionIcon className="h-4 w-4" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-medium text-white truncate">
+                            {siteName}
+                          </h3>
+                          <span className="text-xs text-gray-400 ml-2">
+                            {formatDistanceToNow(new Date(session.entryTime), { addSuffix: true })}
+                          </span>
+                        </div>
                         
-                        return (
-                          <div key={log.id} className="flex items-center justify-between py-1 text-sm">
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${log.action === 'enter' ? 'bg-success' : 'bg-orange-400'}`} />
-                              <span className={log.action === 'enter' ? 'text-success' : 'text-orange-400'}>
-                                {log.action === 'enter' ? 'IN' : 'OUT'}
-                              </span>
-                              <span className="text-white font-mono">{militaryTime}</span>
-                              <span className="flex items-center text-xs text-gray-400">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                {log.isWithinGeofence ? 'Range' : 'Remote'}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              {log.syncedAt ? (
-                                <Wifi className="h-3 w-3 text-success" />
-                              ) : (
-                                <WifiOff className="h-3 w-3 text-orange-400" />
-                              )}
-                            </div>
+                        <div className="flex items-center space-x-4 text-xs text-gray-400 mb-2">
+                          <div className="flex items-center space-x-1">
+                            <Clock className="h-3 w-3" />
+                            <span className="font-mono">
+                              IN: {formatMilitaryTime(session.entryTime)}
+                              {session.exitTime && ` | OUT: ${formatMilitaryTime(session.exitTime)}`}
+                            </span>
                           </div>
-                        );
-                      })}
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500 truncate">
+                            {siteAddress}
+                          </span>
+                          {session.duration && (
+                            <div className="flex items-center space-x-1 text-gray-400">
+                              <Timer className="h-3 w-3" />
+                              <span>{session.duration} min</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              ));
-            })()}
+              );
+            })}
           </div>
         )}
       </main>
