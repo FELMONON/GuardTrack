@@ -139,7 +139,7 @@ export default function Home() {
     .sort((a, b) => a.distance - b.distance)
     : sites.map(site => ({ ...site, distance: 0, isWithinGeofence: false }));
 
-  // Get last visit for each site (using local patrol sessions)
+  // Get last visit for each site using local sessions
   const getLastVisit = (siteId: number) => {
     return sessions
       .filter(session => session.siteId === siteId)
@@ -155,7 +155,6 @@ export default function Home() {
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/patrol-sites'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/recent-visits'] });
     
     if ('vibrate' in navigator) {
       navigator.vibrate(30);
@@ -219,9 +218,8 @@ export default function Home() {
         onClick={handleRefresh}
         className="fixed bottom-20 right-4 w-14 h-14 bg-primary hover:bg-primary/90 text-white rounded-full material-shadow-elevated transition-colors touch-target"
         size="icon"
-        style={{ zIndex: 1000 }}
       >
-        <RefreshCw className="h-5 w-5" />
+        <RefreshCw className="h-6 w-6" />
       </Button>
 
       <BottomNavigation currentRoute="/" />

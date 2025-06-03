@@ -1,4 +1,4 @@
-import { PatrolSite, PatrolSession } from "@shared/schema";
+import { PatrolSite } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Route } from "lucide-react";
@@ -8,7 +8,7 @@ interface PatrolSiteCardProps {
   site: PatrolSite & { distance: number; isWithinGeofence: boolean };
   distance: number;
   isWithinGeofence: boolean;
-  lastVisit?: PatrolSession;
+  lastVisit?: any;
   onEnter: () => void;
   onExit: () => void;
   isLoading: boolean;
