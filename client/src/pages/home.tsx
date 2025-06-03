@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { PatrolSite, PatrolLog } from "@shared/schema";
+import { PatrolSite, PatrolSession } from "@shared/schema";
 import AppHeader from "@/components/app-header";
 import BottomNavigation from "@/components/bottom-navigation";
 import PatrolSiteCard from "@/components/patrol-site-card";
@@ -40,9 +40,9 @@ export default function Home() {
     enabled: true,
   });
 
-  // Get recent visits for each site
-  const { data: recentVisits = [] } = useQuery<(PatrolLog & { site: PatrolSite })[]>({
-    queryKey: [`/api/recent-visits?deviceId=${deviceId}`],
+  // Get recent patrol sessions for each site
+  const { data: recentSessions = [] } = useQuery<(PatrolSession & { site: PatrolSite })[]>({
+    queryKey: [`/api/patrol-sessions?deviceId=${deviceId}&limit=50`],
     enabled: !!deviceId,
   });
 

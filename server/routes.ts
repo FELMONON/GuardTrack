@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPatrolLogSchema, insertPatrolSiteSchema } from "@shared/schema";
+import { insertPatrolLogSchema, insertPatrolSiteSchema, insertPatrolSessionSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -57,6 +57,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced patrol action with session-based logging
+  app.post("/api/patrol-action", async (req, res) => {
+    try {
+      const { siteId, deviceId, action, latitude, longitude, accuracy, isWithinGeofence } = req.body;
+      
+      if (action === 'enter') {
+        // Check if there's already an active session for this device and site
+        const activeSession = await storage.getActiveSession(deviceId, siteId);
+        
+        if (activeSession) {
+          return res.status(400).json({ error: "Already have an active session at this site" });
+        }
+        
+        // Start new session
+        const sessionData = {
+          siteId,
+          deviceId,
+          entryLatitude: latitude,
+          entryLongitude: longitude,
+          entryAccuracy: accuracy,
+          entryWithinGeofence: isWithinGeofence,
+          isActive: true,
+        };
+        
+        const session = await storage.startPatrolSession(sessionData);
+        res.status(201).json({ action: 'enter', session });
+        
+      } else if (action === 'exit') {
+        // Find active session for this device and site
+        const activeSession = await storage.getActiveSession(deviceId, siteId);
+        
+        if (!activeSession) {
+          return res.status(400).json({ error: "No active session found to exit" });
+        }
+        
+        // End the session
+        const exitData = {
+          exitLatitude: latitude,
+          exitLongitude: longitude,
+          exitAccuracy: accuracy,
+          exitWithinGeofence: isWithinGeofence,
+        };
+        
+        const session = await storage.endPatrolSession(activeSession.id, exitData);
+        res.status(200).json({ action: 'exit', session });
+        
+      } else {
+        res.status(400).json({ error: "Invalid action. Must be 'enter' or 'exit'" });
+      }
+      
+    } catch (error) {
+      res.status(500).json({ error: "Failed to process patrol action" });
+    }
+  });
+
   // Get patrol logs by site
   app.get("/api/patrol-logs/site/:siteId", async (req, res) => {
     try {
@@ -105,6 +160,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(visits);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch recent visits" });
+    }
+  });
+
+  // Get patrol sessions with site information
+  app.get("/api/patrol-sessions", async (req, res) => {
+    try {
+      const deviceId = req.query.deviceId as string;
+      const limit = parseInt(req.query.limit as string) || 100;
+      
+      const sessions = await storage.getPatrolSessions(deviceId, limit);
+      res.json(sessions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch patrol sessions" });
     }
   });
 

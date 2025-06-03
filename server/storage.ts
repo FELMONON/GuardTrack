@@ -45,7 +45,7 @@ export class DatabaseStorage implements IStorage {
 
   // Patrol Sessions Methods
   async getPatrolSessions(deviceId?: string, limit = 100): Promise<(PatrolSession & { site: PatrolSite })[]> {
-    let query = db.select({
+    const baseQuery = db.select({
       id: patrolSessions.id,
       siteId: patrolSessions.siteId,
       deviceId: patrolSessions.deviceId,
@@ -69,10 +69,10 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(patrolSessions.entryTime));
 
     if (deviceId) {
-      query = query.where(eq(patrolSessions.deviceId, deviceId));
+      return await baseQuery.where(eq(patrolSessions.deviceId, deviceId)).limit(limit);
     }
 
-    return await query.limit(limit);
+    return await baseQuery.limit(limit);
   }
 
   async startPatrolSession(sessionData: InsertPatrolSession): Promise<PatrolSession> {
