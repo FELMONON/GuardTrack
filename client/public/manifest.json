@@ -1,0 +1,45 @@
+{
+  "name": "Guard Patrol - Security Tracking App",
+  "short_name": "Guard Patrol",
+  "description": "Mobile-first PWA for security guards to track patrol routes with offline GPS logging and geofencing capabilities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1976D2",
+  "orientation": "portrait-primary",
+  "categories": ["security", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' fill='%231976D2'%3E%3Cpath d='M96,9.6L28.8,38.4V84C28.8,126.72 65.472,166.272 96,176C126.528,166.272 163.2,126.72 163.2,84V38.4L96,9.6M96,52.8C102.72,52.8 108.48,64.32 108.48,78V86.4C111.36,86.4 115.2,92.16 115.2,97.6V121.6C115.2,132.48 111.36,137.6 108.48,137.6H83.52C80.64,137.6 76.8,132.48 76.8,121.6V97.6C76.8,92.16 80.64,86.4 83.52,86.4V78C83.52,64.32 89.28,52.8 96,52.8M96,62.4C90.24,62.4 86.4,65.28 86.4,78V86.4H105.6V78C105.6,65.28 101.76,62.4 96,62.4Z'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%231976D2'%3E%3Cpath d='M256,25.6L76.8,102.4V224C76.8,337.92 174.592,442.368 256,469.333C337.408,442.368 435.2,337.92 435.2,224V102.4L256,25.6M256,140.8C272.128,140.8 288.128,172.032 288.128,208V230.4C296.448,230.4 307.2,245.76 307.2,260.267V323.733C307.2,352.256 296.448,366.933 288.128,366.933H223.872C215.552,366.933 204.8,352.256 204.8,323.733V260.267C204.8,245.76 215.552,230.4 223.872,230.4V208C223.872,172.032 239.872,140.8 256,140.8M256,166.4C240.128,166.4 230.4,174.08 230.4,208V230.4H281.6V208C281.6,174.08 271.872,166.4 256,166.4Z'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844' fill='%23121212'%3E%3Crect width='390' height='844' fill='%23121212'/%3E%3Ctext x='195' y='422' text-anchor='middle' fill='%23FFFFFF' font-family='sans-serif' font-size='24'%3EGuard Patrol%3C/text%3E%3Ctext x='195' y='450' text-anchor='middle' fill='%23999999' font-family='sans-serif' font-size='14'%3ESecurity Tracking App%3C/text%3E%3C/svg%3E",
+      "sizes": "390x844",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Guard Patrol main screen"
+    }
+  ],
+  "features": [
+    "GPS tracking",
+    "Offline support",
+    "Geofencing",
+    "Data export",
+    "Audit trail"
+  ],
+  "prefer_related_applications": false,
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr"
+}
