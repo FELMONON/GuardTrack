@@ -15,11 +15,7 @@ export default function Logs() {
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
 
   const { data: logs = [], isLoading: logsLoading } = useQuery<PatrolLog[]>({
-    queryKey: ['/api/patrol-logs', deviceId],
-    queryFn: async () => {
-      const response = await apiRequest('GET', `/api/patrol-logs?deviceId=${deviceId}`);
-      return await response.json();
-    },
+    queryKey: [`/api/patrol-logs?deviceId=${deviceId}`],
     enabled: !!deviceId,
   });
 
