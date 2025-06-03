@@ -137,26 +137,33 @@ export default function Logs() {
                           </span>
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-xs text-gray-400 mb-2">
+                        <div className="space-y-1 text-xs text-gray-400">
                           <div className="flex items-center space-x-1">
                             <Clock className="h-3 w-3" />
                             <span className="font-mono">
-                              IN: {formatMilitaryTime(session.entryTime)}
-                              {session.exitTime && ` | OUT: ${formatMilitaryTime(session.exitTime)}`}
+                              Entered: {formatMilitaryTime(session.entryTime)}
+                              {session.exitTime && ` | Exited: ${formatMilitaryTime(session.exitTime)}`}
                             </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="h-3 w-3" />
+                              <span>
+                                {session.entryAccuracy ? `±${session.entryAccuracy}m` : 'GPS'}
+                              </span>
+                            </div>
+                            {session.duration && (
+                              <div className="flex items-center space-x-1">
+                                <Timer className="h-3 w-3" />
+                                <span>{session.duration} min</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500 truncate">
-                            {siteAddress}
-                          </span>
-                          {session.duration && (
-                            <div className="flex items-center space-x-1 text-gray-400">
-                              <Timer className="h-3 w-3" />
-                              <span>{session.duration} min</span>
-                            </div>
-                          )}
+                        <div className="text-xs text-gray-500 truncate mt-2">
+                          {siteAddress}
                         </div>
                       </div>
                     </div>

@@ -52,11 +52,26 @@ export function usePatrolSessions(deviceId: string) {
     entryAccuracy?: string;
     entryWithinGeofence: boolean;
   }) => {
+    const now = new Date();
+    
+    // Check for recent sessions at the same site (within 60 seconds)
+    const recentSession = offlineSessions.find(session => 
+      session.siteId === sessionData.siteId &&
+      session.deviceId === deviceId &&
+      (now.getTime() - new Date(session.entryTime).getTime()) < 60000 // 60 seconds
+    );
+
+    if (recentSession) {
+      // Don't create a new session, return the existing one
+      console.log('Recent session found, skipping duplicate entry');
+      return recentSession;
+    }
+
     const newSession: OfflinePatrolSession = {
       id: Date.now(),
       deviceId,
       ...sessionData,
-      entryTime: new Date(),
+      entryTime: now,
       exitTime: null,
       isActive: true,
       synced: false,

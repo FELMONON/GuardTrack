@@ -46,7 +46,7 @@ export default function Home() {
     enabled: !!deviceId,
   });
 
-  // Log patrol action
+  // Handle patrol actions with unified session management
   const logActionMutation = useMutation({
     mutationFn: async ({ siteId, action }: { siteId: number; action: 'enter' | 'exit' }) => {
       if (!location) throw new Error('Location not available');
@@ -62,34 +62,41 @@ export default function Home() {
         site.geofenceRadius
       );
 
-      const logData = {
-        siteId,
-        deviceId,
-        action,
-        latitude: location.latitude.toString(),
-        longitude: location.longitude.toString(),
-        accuracy: accuracy?.toString() || null,
-        isWithinGeofence: isWithinFence,
-      };
+      if (action === 'enter') {
+        // Check for existing active session
+        const activeSession = getActiveSession(siteId);
+        if (activeSession) {
+          throw new Error('Already have an active session at this site');
+        }
 
-      try {
-        return await apiRequest('POST', '/api/patrol-action', logData);
-      } catch (error) {
-        // Store session offline if API fails
+        // Start new session
         const sessionData = {
-          ...logData,
-          entryTime: new Date(),
-          exitTime: action === 'exit' ? new Date() : null,
-          isActive: action === 'enter',
-          id: Date.now() // temporary ID
+          siteId,
+          entryLatitude: location.latitude.toString(),
+          entryLongitude: location.longitude.toString(),
+          entryAccuracy: accuracy?.toString(),
+          entryWithinGeofence: isWithinFence,
         };
-        
-        // Store in localStorage for persistence
-        const existingSessions = JSON.parse(localStorage.getItem('offline-patrol-sessions') || '[]');
-        existingSessions.push(sessionData);
-        localStorage.setItem('offline-patrol-sessions', JSON.stringify(existingSessions));
-        
-        throw error;
+
+        const newSession = startSession(sessionData);
+        return { action: 'enter', session: newSession };
+
+      } else if (action === 'exit') {
+        // Find and end active session
+        const activeSession = getActiveSession(siteId);
+        if (!activeSession) {
+          throw new Error('No active session found to exit');
+        }
+
+        const exitData = {
+          exitLatitude: location.latitude.toString(),
+          exitLongitude: location.longitude.toString(),
+          exitAccuracy: accuracy?.toString(),
+          exitWithinGeofence: isWithinFence,
+        };
+
+        endSession(activeSession.id, exitData);
+        return { action: 'exit', session: activeSession };
       }
     },
     onSuccess: (_, { action, siteId }) => {
@@ -142,9 +149,9 @@ export default function Home() {
     .sort((a, b) => a.distance - b.distance)
     : sites.map(site => ({ ...site, distance: 0, isWithinGeofence: false }));
 
-  // Get last visit for each site (using patrol sessions)
+  // Get last visit for each site (using local patrol sessions)
   const getLastVisit = (siteId: number) => {
-    return recentSessions
+    return sessions
       .filter(session => session.siteId === siteId)
       .sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())[0];
   };
