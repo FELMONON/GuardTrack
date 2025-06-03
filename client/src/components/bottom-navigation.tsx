@@ -12,7 +12,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
     { path: "/", label: "Home", icon: Home },
     { path: "/map", label: "Map", icon: Map },
     { path: "/logs", label: "Logs", icon: ClipboardList },
-    { path: "/export", label: "Export", icon: Download },
+    { path: "/shift", label: "Shift", icon: Moon },
     { path: "/settings", label: "Settings", icon: Settings },
   ];
 
