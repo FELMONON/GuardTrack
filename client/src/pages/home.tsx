@@ -73,7 +73,7 @@ export default function Home() {
       };
 
       try {
-        return await apiRequest('POST', '/api/patrol-logs', logData);
+        return await apiRequest('POST', '/api/patrol-action', logData);
       } catch (error) {
         // Store offline if API fails
         await storeLogs([{ ...logData, timestamp: new Date() }]);
@@ -130,11 +130,11 @@ export default function Home() {
     .sort((a, b) => a.distance - b.distance)
     : sites.map(site => ({ ...site, distance: 0, isWithinGeofence: false }));
 
-  // Get last visit for each site
+  // Get last visit for each site (using patrol sessions)
   const getLastVisit = (siteId: number) => {
-    return recentVisits
-      .filter(visit => visit.siteId === siteId)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+    return recentSessions
+      .filter(session => session.siteId === siteId)
+      .sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())[0];
   };
 
   // Initialize sites on first load

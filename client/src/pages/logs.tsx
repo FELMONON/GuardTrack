@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PatrolLog, PatrolSite } from "@shared/schema";
+import { PatrolSession, PatrolSite } from "@shared/schema";
 import AppHeader from "@/components/app-header";
 import BottomNavigation from "@/components/bottom-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { formatDistanceToNow } from "date-fns";
-import { LogIn, LogOut, MapPin, Clock, Wifi, WifiOff } from "lucide-react";
+import { MapPin, Clock, Timer, CheckCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Logs() {
   const [deviceId] = useState(() => localStorage.getItem('patrol-device-id') || '');
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
 
-  const { data: logs = [], isLoading: logsLoading } = useQuery<PatrolLog[]>({
-    queryKey: [`/api/patrol-logs?deviceId=${deviceId}`],
+  const { data: sessions = [], isLoading: sessionsLoading } = useQuery<(PatrolSession & { site: PatrolSite })[]>({
+    queryKey: [`/api/patrol-sessions?deviceId=${deviceId}`],
     enabled: !!deviceId,
   });
 
@@ -33,12 +33,27 @@ export default function Logs() {
     return site?.address || 'Unknown address';
   };
 
-  const getActionIcon = (action: string) => {
-    return action === 'enter' ? LogIn : LogOut;
+  // Format time in military time (24-hour format)
+  const formatMilitaryTime = (date: Date | string) => {
+    const d = new Date(date);
+    return d.toLocaleTimeString('en-CA', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
-  const getActionColor = (action: string) => {
-    return action === 'enter' ? 'text-success' : 'text-orange-400';
+  const getSessionStatus = (session: PatrolSession) => {
+    return session.exitTime ? 'Complete' : 'Active';
+  };
+
+  const getSessionIcon = (session: PatrolSession) => {
+    return session.exitTime ? CheckCircle : Timer;
+  };
+
+  const getSessionColor = (session: PatrolSession) => {
+    return session.exitTime ? 'text-success' : 'text-primary';
   };
 
   return (
