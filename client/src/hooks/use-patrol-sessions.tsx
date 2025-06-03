@@ -123,6 +123,24 @@ export function usePatrolSessions(deviceId: string) {
     localStorage.removeItem('patrol-sessions');
   };
 
+  // Auto-cleanup at shift times (18:00 start, 07:00 end)
+  const checkShiftChange = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const lastCleanup = localStorage.getItem('last-shift-cleanup');
+    const today = now.toDateString();
+    
+    // Clean up at 18:00 (shift start) or 07:00 (shift end)
+    if ((hour === 18 || hour === 7) && minute === 0) {
+      if (lastCleanup !== `${today}-${hour}`) {
+        clearAllSessions();
+        localStorage.setItem('last-shift-cleanup', `${today}-${hour}`);
+        console.log(`${hour === 18 ? 'Shift started' : 'Shift ended'} - cleared patrol history`);
+      }
+    }
+  };
+
   const formatMilitaryTime = (date: Date) => {
     return date.toLocaleTimeString('en-CA', {
       hour12: false,
@@ -132,6 +150,17 @@ export function usePatrolSessions(deviceId: string) {
     });
   };
 
+  // Initialize and setup auto-cleanup
+  useEffect(() => {
+    // Check for shift change every minute
+    const interval = setInterval(checkShiftChange, 60000);
+    
+    // Check immediately on load
+    checkShiftChange();
+    
+    return () => clearInterval(interval);
+  }, []);
+
   return {
     startSession,
     endSession,
@@ -139,6 +168,7 @@ export function usePatrolSessions(deviceId: string) {
     getAllSessions,
     clearAllSessions,
     formatMilitaryTime,
+    checkShiftChange, // Expose for manual testing
     sessions: offlineSessions.filter(session => session.deviceId === deviceId),
   };
 }

@@ -14,7 +14,7 @@ import { format, isAfter, isBefore, startOfDay, addHours } from "date-fns";
 export default function ShiftSummary() {
   const [deviceId] = useState(() => localStorage.getItem('patrol-device-id') || '');
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
-  const { getAllSessions, formatMilitaryTime } = usePatrolSessions(deviceId);
+  const { getAllSessions, formatMilitaryTime, clearAllSessions, checkShiftChange } = usePatrolSessions(deviceId);
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [shiftStartTime, setShiftStartTime] = useState<Date | null>(null);
 
@@ -208,8 +208,8 @@ export default function ShiftSummary() {
           </CardContent>
         </Card>
 
-        {/* Export Button */}
-        <div className="mb-6">
+        {/* Action Buttons */}
+        <div className="mb-6 space-y-3">
           <Button 
             onClick={exportShiftSummary}
             className="w-full bg-primary hover:bg-primary/90"
@@ -218,6 +218,32 @@ export default function ShiftSummary() {
             <Download className="h-4 w-4 mr-2" />
             Export Shift Summary
           </Button>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <Button 
+              onClick={() => {
+                clearAllSessions();
+                window.location.reload();
+              }}
+              variant="outline"
+              className="text-red-400 border-red-400 hover:bg-red-400/10"
+            >
+              Clear History
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                // Force cleanup check
+                localStorage.removeItem('last-shift-cleanup');
+                checkShiftChange();
+                setTimeout(() => window.location.reload(), 500);
+              }}
+              variant="outline"
+              className="text-blue-400 border-blue-400 hover:bg-blue-400/10"
+            >
+              Test Cleanup
+            </Button>
+          </div>
         </div>
 
         {/* Patrol Sessions List */}
