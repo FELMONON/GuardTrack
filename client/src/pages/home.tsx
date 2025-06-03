@@ -156,17 +156,9 @@ export default function Home() {
     }
   }, [sites.length, sitesLoading]);
 
-  // Auto-sync offline logs when online
-  useEffect(() => {
-    if (navigator.onLine) {
-      syncOfflineLogs();
-    }
-  }, [navigator.onLine]);
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/patrol-sites'] });
     queryClient.invalidateQueries({ queryKey: ['/api/recent-visits'] });
-    syncOfflineLogs();
     
     if ('vibrate' in navigator) {
       navigator.vibrate(30);

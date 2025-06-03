@@ -34,26 +34,17 @@ export default function Logs() {
     return site?.address || 'Unknown address';
   };
 
-  // Format time in military time (24-hour format)
-  const formatMilitaryTime = (date: Date | string) => {
-    const d = new Date(date);
-    return d.toLocaleTimeString('en-CA', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
-  const getSessionStatus = (session: PatrolSession) => {
+
+  const getSessionStatus = (session: any) => {
     return session.exitTime ? 'Complete' : 'Active';
   };
 
-  const getSessionIcon = (session: PatrolSession) => {
+  const getSessionIcon = (session: any) => {
     return session.exitTime ? CheckCircle : Timer;
   };
 
-  const getSessionColor = (session: PatrolSession) => {
+  const getSessionColor = (session: any) => {
     return session.exitTime ? 'text-success' : 'text-primary';
   };
 
@@ -95,23 +86,23 @@ export default function Logs() {
           </CardContent>
         </Card>
 
-        {/* Sessions List */}
-        {sessionsLoading ? (
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="surface-variant rounded-lg p-4 material-shadow animate-pulse">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
-                  <div className="flex-1">
-                    <div className="h-4 bg-gray-600 rounded w-1/2 mb-2"></div>
-                    <div className="h-3 bg-gray-600 rounded w-3/4 mb-1"></div>
-                    <div className="h-3 bg-gray-600 rounded w-1/3"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* Clear All Button */}
+        {sessions.length > 0 && (
+          <div className="mb-4">
+            <Button
+              onClick={() => clearAllSessions()}
+              variant="outline"
+              size="sm"
+              className="text-red-400 border-red-400 hover:bg-red-400/10"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear All Sessions
+            </Button>
           </div>
-        ) : sessions.length === 0 ? (
+        )}
+
+        {/* Sessions List */}
+        {sessions.length === 0 ? (
           <Card className="surface-variant border-0">
             <CardContent className="p-8 text-center">
               <Clock className="h-12 w-12 text-gray-500 mx-auto mb-4" />
@@ -125,8 +116,8 @@ export default function Logs() {
           <div className="space-y-3">
             {sessions.map((session) => {
               const SessionIcon = getSessionIcon(session);
-              const siteName = session.site?.name || `Site #${session.siteId}`;
-              const siteAddress = session.site?.address || 'Unknown address';
+              const siteName = getSiteName(session.siteId);
+              const siteAddress = getSiteAddress(session.siteId);
               
               return (
                 <Card key={session.id} className="surface-variant border-0">
