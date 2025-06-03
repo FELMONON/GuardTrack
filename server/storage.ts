@@ -1,6 +1,6 @@
-import { patrolSites, patrolLogs, type PatrolSite, type InsertPatrolSite, type PatrolLog, type InsertPatrolLog } from "@shared/schema";
+import { patrolSites, patrolLogs, patrolSessions, type PatrolSite, type InsertPatrolSite, type PatrolLog, type InsertPatrolLog, type PatrolSession, type InsertPatrolSession } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { eq, desc, and, gte, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Patrol Sites
@@ -8,7 +8,13 @@ export interface IStorage {
   getPatrolSite(id: number): Promise<PatrolSite | undefined>;
   createPatrolSite(site: InsertPatrolSite): Promise<PatrolSite>;
   
-  // Patrol Logs
+  // Patrol Sessions (new unified logging)
+  getPatrolSessions(deviceId?: string, limit?: number): Promise<(PatrolSession & { site: PatrolSite })[]>;
+  startPatrolSession(sessionData: InsertPatrolSession): Promise<PatrolSession>;
+  endPatrolSession(sessionId: number, exitData: { exitLatitude: string; exitLongitude: string; exitAccuracy?: string; exitWithinGeofence: boolean }): Promise<PatrolSession>;
+  getActiveSession(deviceId: string, siteId: number): Promise<PatrolSession | undefined>;
+  
+  // Legacy Patrol Logs (keep for backward compatibility)
   getPatrolLogs(deviceId?: string, limit?: number): Promise<PatrolLog[]>;
   getPatrolLogsBySite(siteId: number, deviceId?: string): Promise<PatrolLog[]>;
   createPatrolLog(log: InsertPatrolLog): Promise<PatrolLog>;
@@ -16,7 +22,7 @@ export interface IStorage {
   markLogsSynced(logIds: number[]): Promise<void>;
   
   // Analytics
-  getRecentVisits(deviceId: string, hours?: number): Promise<(PatrolLog & { site: PatrolSite })[]>;
+  getRecentVisits(deviceId: string, hours?: number): Promise<(PatrolSession & { site: PatrolSite })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -35,6 +41,78 @@ export class DatabaseStorage implements IStorage {
       .values(insertSite)
       .returning();
     return site;
+  }
+
+  // Patrol Sessions Methods
+  async getPatrolSessions(deviceId?: string, limit = 100): Promise<(PatrolSession & { site: PatrolSite })[]> {
+    let query = db.select({
+      id: patrolSessions.id,
+      siteId: patrolSessions.siteId,
+      deviceId: patrolSessions.deviceId,
+      entryTime: patrolSessions.entryTime,
+      exitTime: patrolSessions.exitTime,
+      entryLatitude: patrolSessions.entryLatitude,
+      entryLongitude: patrolSessions.entryLongitude,
+      exitLatitude: patrolSessions.exitLatitude,
+      exitLongitude: patrolSessions.exitLongitude,
+      entryAccuracy: patrolSessions.entryAccuracy,
+      exitAccuracy: patrolSessions.exitAccuracy,
+      entryWithinGeofence: patrolSessions.entryWithinGeofence,
+      exitWithinGeofence: patrolSessions.exitWithinGeofence,
+      duration: patrolSessions.duration,
+      isActive: patrolSessions.isActive,
+      syncedAt: patrolSessions.syncedAt,
+      site: patrolSites,
+    })
+      .from(patrolSessions)
+      .innerJoin(patrolSites, eq(patrolSessions.siteId, patrolSites.id))
+      .orderBy(desc(patrolSessions.entryTime));
+
+    if (deviceId) {
+      query = query.where(eq(patrolSessions.deviceId, deviceId));
+    }
+
+    return await query.limit(limit);
+  }
+
+  async startPatrolSession(sessionData: InsertPatrolSession): Promise<PatrolSession> {
+    const [session] = await db
+      .insert(patrolSessions)
+      .values(sessionData)
+      .returning();
+    return session;
+  }
+
+  async endPatrolSession(sessionId: number, exitData: { exitLatitude: string; exitLongitude: string; exitAccuracy?: string; exitWithinGeofence: boolean }): Promise<PatrolSession> {
+    const entryTime = await db.select({ entryTime: patrolSessions.entryTime }).from(patrolSessions).where(eq(patrolSessions.id, sessionId));
+    const duration = entryTime.length > 0 ? Math.round((Date.now() - new Date(entryTime[0].entryTime).getTime()) / (1000 * 60)) : null;
+
+    const [session] = await db
+      .update(patrolSessions)
+      .set({
+        exitTime: new Date(),
+        exitLatitude: exitData.exitLatitude,
+        exitLongitude: exitData.exitLongitude,
+        exitAccuracy: exitData.exitAccuracy,
+        exitWithinGeofence: exitData.exitWithinGeofence,
+        duration,
+        isActive: false,
+      })
+      .where(eq(patrolSessions.id, sessionId))
+      .returning();
+    return session;
+  }
+
+  async getActiveSession(deviceId: string, siteId: number): Promise<PatrolSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(patrolSessions)
+      .where(and(
+        eq(patrolSessions.deviceId, deviceId),
+        eq(patrolSessions.siteId, siteId),
+        eq(patrolSessions.isActive, true)
+      ));
+    return session || undefined;
   }
 
   async getPatrolLogs(deviceId?: string, limit = 100): Promise<PatrolLog[]> {
@@ -84,29 +162,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(patrolLogs.id, logIds[0])); // This would need to be modified for multiple IDs
   }
 
-  async getRecentVisits(deviceId: string, hours = 24): Promise<(PatrolLog & { site: PatrolSite })[]> {
+  async getRecentVisits(deviceId: string, hours = 24): Promise<(PatrolSession & { site: PatrolSite })[]> {
     const sinceTime = new Date(Date.now() - hours * 60 * 60 * 1000);
     
     return await db.select({
-      id: patrolLogs.id,
-      siteId: patrolLogs.siteId,
-      deviceId: patrolLogs.deviceId,
-      action: patrolLogs.action,
-      timestamp: patrolLogs.timestamp,
-      latitude: patrolLogs.latitude,
-      longitude: patrolLogs.longitude,
-      accuracy: patrolLogs.accuracy,
-      isWithinGeofence: patrolLogs.isWithinGeofence,
-      syncedAt: patrolLogs.syncedAt,
+      id: patrolSessions.id,
+      siteId: patrolSessions.siteId,
+      deviceId: patrolSessions.deviceId,
+      entryTime: patrolSessions.entryTime,
+      exitTime: patrolSessions.exitTime,
+      entryLatitude: patrolSessions.entryLatitude,
+      entryLongitude: patrolSessions.entryLongitude,
+      exitLatitude: patrolSessions.exitLatitude,
+      exitLongitude: patrolSessions.exitLongitude,
+      entryAccuracy: patrolSessions.entryAccuracy,
+      exitAccuracy: patrolSessions.exitAccuracy,
+      entryWithinGeofence: patrolSessions.entryWithinGeofence,
+      exitWithinGeofence: patrolSessions.exitWithinGeofence,
+      duration: patrolSessions.duration,
+      isActive: patrolSessions.isActive,
+      syncedAt: patrolSessions.syncedAt,
       site: patrolSites,
     })
-      .from(patrolLogs)
-      .innerJoin(patrolSites, eq(patrolLogs.siteId, patrolSites.id))
+      .from(patrolSessions)
+      .innerJoin(patrolSites, eq(patrolSessions.siteId, patrolSites.id))
       .where(and(
-        eq(patrolLogs.deviceId, deviceId),
-        gte(patrolLogs.timestamp, sinceTime)
+        eq(patrolSessions.deviceId, deviceId),
+        gte(patrolSessions.entryTime, sinceTime)
       ))
-      .orderBy(desc(patrolLogs.timestamp));
+      .orderBy(desc(patrolSessions.entryTime));
   }
 }
 
