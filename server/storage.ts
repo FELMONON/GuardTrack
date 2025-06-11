@@ -1,6 +1,6 @@
 import { patrolSites, patrolLogs, patrolSessions, type PatrolSite, type InsertPatrolSite, type PatrolLog, type InsertPatrolLog, type PatrolSession, type InsertPatrolSession } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, isNull } from "drizzle-orm";
+import { eq, desc, and, gte, isNull, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Patrol Sites
@@ -126,15 +126,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPatrolLogsBySite(siteId: number, deviceId?: string): Promise<PatrolLog[]> {
-    let query = db.select().from(patrolLogs)
-      .where(eq(patrolLogs.siteId, siteId))
-      .orderBy(desc(patrolLogs.timestamp));
-    
     if (deviceId) {
-      query = query.where(and(eq(patrolLogs.siteId, siteId), eq(patrolLogs.deviceId, deviceId)));
+      return await db.select().from(patrolLogs)
+        .where(and(
+          eq(patrolLogs.siteId, siteId), 
+          eq(patrolLogs.deviceId, deviceId)
+        ))
+        .orderBy(desc(patrolLogs.timestamp));
     }
     
-    return await query;
+    return await db.select().from(patrolLogs)
+      .where(eq(patrolLogs.siteId, siteId))
+      .orderBy(desc(patrolLogs.timestamp));
   }
 
   async createPatrolLog(insertLog: InsertPatrolLog): Promise<PatrolLog> {
@@ -149,7 +152,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patrolLogs)
       .where(and(
         eq(patrolLogs.deviceId, deviceId),
-        eq(patrolLogs.syncedAt, null)
+        isNull(patrolLogs.syncedAt)
       ))
       .orderBy(desc(patrolLogs.timestamp));
   }
@@ -159,7 +162,7 @@ export class DatabaseStorage implements IStorage {
     
     await db.update(patrolLogs)
       .set({ syncedAt: new Date() })
-      .where(eq(patrolLogs.id, logIds[0])); // This would need to be modified for multiple IDs
+      .where(inArray(patrolLogs.id, logIds));
   }
 
   async getRecentVisits(deviceId: string, hours = 24): Promise<(PatrolSession & { site: PatrolSite })[]> {

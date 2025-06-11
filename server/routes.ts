@@ -62,6 +62,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { siteId, deviceId, action, latitude, longitude, accuracy, isWithinGeofence } = req.body;
       
+      // Input validation
+      if (!siteId || !deviceId || !action || latitude === undefined || longitude === undefined) {
+        return res.status(400).json({ 
+          error: "Missing required fields: siteId, deviceId, action, latitude, longitude" 
+        });
+      }
+      
+      if (!['enter', 'exit'].includes(action)) {
+        return res.status(400).json({ 
+          error: "Invalid action. Must be 'enter' or 'exit'" 
+        });
+      }
+      
+      if (typeof siteId !== 'number' || typeof latitude !== 'number' || typeof longitude !== 'number') {
+        return res.status(400).json({ 
+          error: "siteId, latitude, and longitude must be numbers" 
+        });
+      }
+      
+      if (typeof deviceId !== 'string' || deviceId.trim().length === 0) {
+        return res.status(400).json({ 
+          error: "deviceId must be a non-empty string" 
+        });
+      }
+      
       if (action === 'enter') {
         // Check if there's already an active session for this device and site
         const activeSession = await storage.getActiveSession(deviceId, siteId);
@@ -74,10 +99,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessionData = {
           siteId,
           deviceId,
-          entryLatitude: latitude,
-          entryLongitude: longitude,
-          entryAccuracy: accuracy,
-          entryWithinGeofence: isWithinGeofence,
+          entryLatitude: latitude.toString(),
+          entryLongitude: longitude.toString(),
+          entryAccuracy: accuracy ? accuracy.toString() : undefined,
+          entryWithinGeofence: Boolean(isWithinGeofence),
           isActive: true,
         };
         
@@ -94,20 +119,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // End the session
         const exitData = {
-          exitLatitude: latitude,
-          exitLongitude: longitude,
-          exitAccuracy: accuracy,
-          exitWithinGeofence: isWithinGeofence,
+          exitLatitude: latitude.toString(),
+          exitLongitude: longitude.toString(),
+          exitAccuracy: accuracy ? accuracy.toString() : undefined,
+          exitWithinGeofence: Boolean(isWithinGeofence),
         };
         
         const session = await storage.endPatrolSession(activeSession.id, exitData);
         res.status(200).json({ action: 'exit', session });
-        
-      } else {
-        res.status(400).json({ error: "Invalid action. Must be 'enter' or 'exit'" });
       }
       
     } catch (error) {
+      console.error('Error in patrol-action:', error);
       res.status(500).json({ error: "Failed to process patrol action" });
     }
   });
@@ -128,16 +151,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sync-logs", async (req, res) => {
     try {
       const { logs } = req.body;
-      const syncedLogs = [];
       
-      for (const logData of logs) {
-        const validatedLog = insertPatrolLogSchema.parse(logData);
-        const log = await storage.createPatrolLog(validatedLog);
-        syncedLogs.push(log);
+      // Input validation
+      if (!logs || !Array.isArray(logs)) {
+        return res.status(400).json({ 
+          error: "Invalid request body. 'logs' must be an array" 
+        });
       }
       
-      res.json({ synced: syncedLogs.length, logs: syncedLogs });
+      if (logs.length === 0) {
+        return res.json({ synced: 0, logs: [] });
+      }
+      
+      const syncedLogs = [];
+      const errors = [];
+      
+      for (let i = 0; i < logs.length; i++) {
+        try {
+          const logData = logs[i];
+          const validatedLog = insertPatrolLogSchema.parse(logData);
+          const log = await storage.createPatrolLog(validatedLog);
+          syncedLogs.push(log);
+        } catch (validationError: unknown) {
+          console.error(`Error syncing log at index ${i}:`, validationError);
+          errors.push({
+            index: i,
+            error: validationError instanceof z.ZodError ? validationError.errors : String(validationError)
+          });
+        }
+      }
+      
+      res.json({ 
+        synced: syncedLogs.length, 
+        logs: syncedLogs,
+        errors: errors.length > 0 ? errors : undefined
+      });
     } catch (error) {
+      console.error('Error in sync-logs:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid log data", details: error.errors });
       } else {
