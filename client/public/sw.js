@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
+        // Cache opened successfully
         return cache.addAll(PRECACHE_ASSETS);
       })
       .then(() => {
@@ -31,7 +31,7 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
-              console.log('Deleting old cache:', cacheName);
+              // Deleting old cache
               return caches.delete(cacheName);
             }
           })
@@ -129,7 +129,7 @@ async function syncPatrolLogs() {
   try {
     // This would integrate with the IndexedDB offline storage
     // to sync any pending patrol logs when the device comes back online
-    console.log('Syncing patrol logs...');
+    // Syncing patrol logs...
     
     // In a real implementation, this would:
     // 1. Open IndexedDB
@@ -137,8 +137,7 @@ async function syncPatrolLogs() {
     // 3. Send them to the server
     // 4. Mark them as synced
     
-    // For now, just log that sync was attempted
-    console.log('Patrol logs sync completed');
+    // Patrol logs sync completed
   } catch (error) {
     console.error('Failed to sync patrol logs:', error);
     throw error; // This will cause the sync to be retried

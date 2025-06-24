@@ -8,6 +8,11 @@ import { useGeolocation } from "@/hooks/use-geolocation";
 import { calculateDistance } from "@/lib/geofencing";
 import { MapPin, Navigation, Crosshair } from "lucide-react";
 
+// Type for sites with calculated distance
+type PatrolSiteWithDistance = PatrolSite & {
+  distance: number;
+};
+
 export default function Map() {
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
   const [mapCenter, setMapCenter] = useState({ lat: 51.0447, lng: -114.0719 }); // Calgary default
@@ -23,7 +28,7 @@ export default function Map() {
     }
   }, [location]);
 
-  const sitesWithDistance = location ? sites.map(site => ({
+  const sitesWithDistance: PatrolSiteWithDistance[] = location ? sites.map(site => ({
     ...site,
     distance: calculateDistance(
       location.latitude,
@@ -31,7 +36,7 @@ export default function Map() {
       parseFloat(site.latitude),
       parseFloat(site.longitude)
     )
-  })).sort((a, b) => a.distance - b.distance) : sites;
+  })).sort((a, b) => a.distance - b.distance) : sites.map(site => ({ ...site, distance: 0 }));
 
   return (
     <div className="min-h-screen bg-surface">

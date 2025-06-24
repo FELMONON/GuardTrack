@@ -3,35 +3,36 @@
 @tailwind utilities;
 
 :root {
-  --background: 240 10% 3.9%; /* #121212 */
-  --foreground: 0 0% 98%; /* #FAFAFA */
-  --muted: 240 3.7% 15.9%; /* #1E1E1E */
-  --muted-foreground: 240 5% 64.9%; /* #9E9E9E */
-  --popover: 240 10% 3.9%; /* #121212 */
-  --popover-foreground: 0 0% 98%; /* #FAFAFA */
-  --card: 240 3.7% 15.9%; /* #1E1E1E */
-  --card-foreground: 0 0% 98%; /* #FAFAFA */
-  --border: 240 3.7% 15.9%; /* #1E1E1E */
-  --input: 240 3.7% 15.9%; /* #1E1E1E */
-  --primary: 207 90% 54%; /* #1976D2 */
-  --primary-foreground: 211 100% 99%; /* #E3F2FD */
-  --secondary: 240 3.7% 15.9%; /* #424242 */
-  --secondary-foreground: 0 0% 98%; /* #FAFAFA */
-  --accent: 240 3.7% 15.9%; /* #1E1E1E */
-  --accent-foreground: 0 0% 98%; /* #FAFAFA */
-  --destructive: 0 84.2% 60.2%; /* #F44336 */
-  --destructive-foreground: 60 9.1% 97.8%; /* #FAFAFA */
-  --success: 122 39% 49%; /* #4CAF50 */
-  --success-foreground: 0 0% 98%; /* #FAFAFA */
-  --warning: 35 91% 65%; /* #FF9800 */
-  --warning-foreground: 0 0% 98%; /* #FAFAFA */
-  --ring: 240 4.9% 83.9%; /* #9E9E9E */
-  --radius: 0.75rem;
+  /* Minimalist color palette */
+  --background: 0 0% 100%; /* Pure white */
+  --foreground: 0 0% 9%; /* Near black */
+  --muted: 0 0% 96%; /* Light gray */
+  --muted-foreground: 0 0% 45%; /* Medium gray */
+  --popover: 0 0% 100%; /* White */
+  --popover-foreground: 0 0% 9%; /* Near black */
+  --card: 0 0% 100%; /* White */
+  --card-foreground: 0 0% 9%; /* Near black */
+  --border: 0 0% 90%; /* Light border */
+  --input: 0 0% 96%; /* Light input bg */
+  --primary: 217 91% 60%; /* Clean blue */
+  --primary-foreground: 0 0% 98%; /* White */
+  --secondary: 0 0% 96%; /* Light gray */
+  --secondary-foreground: 0 0% 9%; /* Near black */
+  --accent: 0 0% 96%; /* Light gray */
+  --accent-foreground: 0 0% 9%; /* Near black */
+  --destructive: 0 84% 60%; /* Clean red */
+  --destructive-foreground: 0 0% 98%; /* White */
+  --success: 142 76% 36%; /* Clean green */
+  --success-foreground: 0 0% 98%; /* White */
+  --warning: 38 92% 50%; /* Clean orange */
+  --warning-foreground: 0 0% 98%; /* White */
+  --ring: 217 91% 60%; /* Blue ring */
+  --radius: 8px; /* Consistent rounded corners */
   
-  /* Custom patrol app colors */
-  --surface: 240 10% 3.9%; /* #121212 */
-  --surface-variant: 240 3.7% 15.9%; /* #1E1E1E */
-  --surface-container: 240 3.7% 20%; /* #2A2A2A */
+  /* Clean surface colors */
+  --surface: 0 0% 100%; /* White */
+  --surface-variant: 0 0% 98%; /* Almost white */
+  --surface-container: 0 0% 96%; /* Light gray */
 }
 
 @layer base {
@@ -41,16 +42,145 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     max-width: 390px;
     margin: 0 auto;
-    min-height: 844px;
+    min-height: 100vh;
     background-color: hsl(var(--surface));
+    line-height: 1.6;
   }
 
   html {
     scroll-behavior: smooth;
   }
+}
+
+@layer components {
+  /* Minimalist card design */
+  .clean-card {
+    @apply bg-white border border-gray-100 rounded-lg shadow-sm;
+  }
+  
+  /* Clean button styles */
+  .clean-button {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+  
+  .clean-button-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800;
+  }
+  
+  .clean-button-secondary {
+    @apply bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300;
+  }
+  
+  /* Clean text styles */
+  .text-primary {
+    @apply text-gray-900;
+  }
+  
+  .text-secondary {
+    @apply text-gray-600;
+  }
+  
+  .text-tertiary {
+    @apply text-gray-400;
+  }
+  
+  /* Clean spacing system */
+  .space-clean {
+    @apply space-y-4;
+  }
+  
+  .space-clean-sm {
+    @apply space-y-2;
+  }
+  
+  .space-clean-lg {
+    @apply space-y-6;
+  }
+  
+  /* Improved focus states */
+  .focus-clean {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  /* Clean shadows */
+  .shadow-clean {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+  
+  .shadow-clean-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Clean animation */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Human-centered touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Clean status indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+  
+  .status-active {
+    @apply bg-green-500;
+  }
+  
+  .status-inactive {
+    @apply bg-gray-300;
+  }
+  
+  /* Minimalist toggle */
+  .clean-toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors;
+  }
+  
+  .clean-toggle[data-state="checked"] {
+    @apply bg-blue-600;
+  }
+  
+  .clean-toggle[data-state="unchecked"] {
+    @apply bg-gray-200;
+  }
+}
+
+/* Remove default focus rings and add clean ones */
+button:focus, 
+input:focus, 
+select:focus, 
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Clean scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 @layer utilities {
@@ -100,12 +230,6 @@
   
   .bg-warning {
     background-color: hsl(var(--warning));
-  }
-
-  /* Touch-friendly sizing for mobile */
-  .touch-target {
-    min-height: 48px;
-    min-width: 48px;
   }
 
   /* Optimize for mobile viewport */

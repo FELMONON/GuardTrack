@@ -17,9 +17,11 @@ npm install
 
 ### 2. Environment Configuration
 
+⚠️ **IMPORTANT**: You must set up your database connection before running the application.
+
 Create your environment variables (DATABASE_URL is required):
 
-**Option A: Using Neon Database (Recommended)**
+**Option A: Using Neon Database (Recommended - Free Tier Available)**
 1. Go to [neon.tech](https://neon.tech) and create a free account
 2. Create a new project
 3. Copy your connection string from the dashboard
@@ -95,6 +97,8 @@ DATABASE_URL="your-production-database-url" npm start
 ### Build Issues
 - Clear node_modules and reinstall: `rm -rf node_modules package-lock.json && npm install`
 - Ensure you're using Node.js 18 or higher: `node --version`
+- If you see TypeScript errors, run: `npm run check` to verify they're resolved
+- For "Property 'distance' does not exist" errors: These have been fixed in the latest version
 
 ## API Testing
 

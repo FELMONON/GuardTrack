@@ -116,13 +116,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPatrolLogs(deviceId?: string, limit = 100): Promise<PatrolLog[]> {
-    let query = db.select().from(patrolLogs).orderBy(desc(patrolLogs.timestamp));
-    
     if (deviceId) {
-      query = query.where(eq(patrolLogs.deviceId, deviceId));
+      return await db.select().from(patrolLogs)
+        .where(eq(patrolLogs.deviceId, deviceId))
+        .orderBy(desc(patrolLogs.timestamp))
+        .limit(limit);
     }
     
-    return await query.limit(limit);
+    return await db.select().from(patrolLogs)
+      .orderBy(desc(patrolLogs.timestamp))
+      .limit(limit);
   }
 
   async getPatrolLogsBySite(siteId: number, deviceId?: string): Promise<PatrolLog[]> {

@@ -1,0 +1,14 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "always"
+
+[env]
+NODE_ENV = "production"
+PORT = "3000"
+
+[[services]]
+name = "guardtrack" 

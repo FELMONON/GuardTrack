@@ -5,12 +5,14 @@ import AppHeader from "@/components/app-header";
 import BottomNavigation from "@/components/bottom-navigation";
 import PatrolSiteCard from "@/components/patrol-site-card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { usePatrolSessions } from "@/hooks/use-patrol-sessions";
+import { useGeofenceMonitor } from "@/hooks/use-geofence-monitor";
 import { calculateDistance, isWithinGeofence } from "@/lib/geofencing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Radar, Zap } from "lucide-react";
 
 export default function Home() {
   const [deviceId] = useState(() => {
@@ -25,7 +27,7 @@ export default function Home() {
   const { toast } = useToast();
   const { location, accuracy, isLoading: locationLoading, error: locationError } = useGeolocation();
   const { startSession, endSession, getActiveSession, sessions } = usePatrolSessions(deviceId);
-
+  
   // Initialize default sites
   const initSitesMutation = useMutation({
     mutationFn: () => apiRequest('POST', '/api/init-sites'),
@@ -39,6 +41,19 @@ export default function Home() {
     queryKey: ['/api/patrol-sites'],
     enabled: true,
   });
+
+  // Auto-detection toggle
+  const [autoDetectionEnabled, setAutoDetectionEnabled] = useState(() => {
+    return localStorage.getItem('auto-detection-enabled') !== 'false';
+  });
+  
+  // Start automatic geofence monitoring
+  const { autoEntries, autoExits, isMonitoring } = useGeofenceMonitor(
+    location,
+    sites,
+    deviceId,
+    autoDetectionEnabled
+  );
 
   // Handle patrol actions with unified session management and duplicate prevention
   const logActionMutation = useMutation({
@@ -161,6 +176,23 @@ export default function Home() {
     }
   };
 
+  const toggleAutoDetection = (enabled: boolean) => {
+    setAutoDetectionEnabled(enabled);
+    localStorage.setItem('auto-detection-enabled', enabled.toString());
+    
+    toast({
+      title: enabled ? "Auto-Detection Enabled" : "Auto-Detection Disabled",
+      description: enabled 
+        ? "Will automatically log entry/exit when you cross geofences" 
+        : "Manual entry/exit buttons required",
+      duration: 3000,
+    });
+    
+    if ('vibrate' in navigator) {
+      navigator.vibrate(enabled ? [50, 50, 100] : [200]);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-surface">
       <AppHeader 
@@ -177,6 +209,44 @@ export default function Home() {
           <span className="text-xs text-gray-400 surface-container px-2 py-1 rounded">
             Sorted by distance
           </span>
+        </div>
+
+        {/* Auto-Detection Control Panel */}
+        <div className="surface-variant rounded-xl p-4 mb-4 material-shadow">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <Radar className={`h-5 w-5 ${isMonitoring ? 'text-green-400 animate-pulse' : 'text-gray-400'}`} />
+              <span className="font-medium">Auto-Detection</span>
+              {isMonitoring && (
+                <span className="text-xs text-green-400 bg-green-400/20 px-2 py-1 rounded">
+                  ACTIVE
+                </span>
+              )}
+            </div>
+            <Switch
+              checked={autoDetectionEnabled}
+              onCheckedChange={toggleAutoDetection}
+            />
+          </div>
+          
+          <p className="text-sm text-gray-400 mb-3">
+            {autoDetectionEnabled 
+              ? "Automatically logs entry/exit when you cross geofences" 
+              : "Manual entry/exit required - tap buttons below"}
+          </p>
+          
+          {autoDetectionEnabled && (autoEntries > 0 || autoExits > 0) && (
+            <div className="flex items-center space-x-4 text-xs">
+              <div className="flex items-center space-x-1 text-green-400">
+                <Zap className="h-3 w-3" />
+                <span>Auto Entries: {autoEntries}</span>
+              </div>
+              <div className="flex items-center space-x-1 text-orange-400">
+                <Zap className="h-3 w-3" />
+                <span>Auto Exits: {autoExits}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {sitesLoading ? (

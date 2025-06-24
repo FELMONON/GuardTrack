@@ -63,7 +63,7 @@ export function usePatrolSessions(deviceId: string) {
 
     if (recentSession) {
       // Don't create a new session, return the existing one
-      console.log('Recent session found, skipping duplicate entry');
+              // Recent session found, skipping duplicate entry
       return recentSession;
     }
 
@@ -136,7 +136,7 @@ export function usePatrolSessions(deviceId: string) {
       if (lastCleanup !== `${today}-${hour}`) {
         clearAllSessions();
         localStorage.setItem('last-shift-cleanup', `${today}-${hour}`);
-        console.log(`${hour === 18 ? 'Shift started' : 'Shift ended'} - cleared patrol history`);
+        // Shift change detected - patrol history cleared
       }
     }
   };

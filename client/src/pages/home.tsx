@@ -5,12 +5,14 @@ import AppHeader from "@/components/app-header";
 import BottomNavigation from "@/components/bottom-navigation";
 import PatrolSiteCard from "@/components/patrol-site-card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { usePatrolSessions } from "@/hooks/use-patrol-sessions";
+import { useGeofenceMonitor } from "@/hooks/use-geofence-monitor";
 import { calculateDistance, isWithinGeofence } from "@/lib/geofencing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, MapPin, Zap } from "lucide-react";
 
 export default function Home() {
   const [deviceId] = useState(() => {
@@ -39,6 +41,19 @@ export default function Home() {
     queryKey: ['/api/patrol-sites'],
     enabled: true,
   });
+
+  // Auto-detection toggle
+  const [autoDetectionEnabled, setAutoDetectionEnabled] = useState(() => {
+    return localStorage.getItem('auto-detection-enabled') !== 'false';
+  });
+  
+  // Start automatic geofence monitoring
+  const { autoEntries, autoExits, isMonitoring } = useGeofenceMonitor(
+    location,
+    sites,
+    deviceId,
+    autoDetectionEnabled
+  );
 
   // Handle patrol actions with unified session management and duplicate prevention
   const logActionMutation = useMutation({
@@ -162,8 +177,25 @@ export default function Home() {
     }
   };
 
+  const toggleAutoDetection = (enabled: boolean) => {
+    setAutoDetectionEnabled(enabled);
+    localStorage.setItem('auto-detection-enabled', enabled.toString());
+    
+    toast({
+      title: enabled ? "Auto-Detection Enabled" : "Auto-Detection Disabled",
+      description: enabled 
+        ? "Will automatically log entry/exit when you cross geofences" 
+        : "Manual entry/exit buttons required",
+      duration: 3000,
+    });
+    
+    if ('vibrate' in navigator) {
+      navigator.vibrate(enabled ? [50, 50, 100] : [200]);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-white">
       <AppHeader 
         location={location}
         accuracy={accuracy}
@@ -172,57 +204,115 @@ export default function Home() {
         locationError={locationError}
       />
 
-      <main className="px-4 py-4 pb-24">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium">Patrol Sites</h2>
-          <span className="text-xs text-gray-400 surface-container px-2 py-1 rounded">
-            Sorted by distance
-          </span>
+      <main className="px-6 py-6 pb-24 space-clean-lg">
+        {/* Page Header */}
+        <div className="space-clean-sm">
+          <h1 className="text-2xl font-semibold text-primary">Patrol Sites</h1>
+          <p className="text-secondary text-sm">
+            {location ? 'Sorted by your distance' : 'Enable location to see distances'}
+          </p>
         </div>
 
+        {/* Auto-Detection Panel */}
+        <div className="clean-card p-5 animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-lg ${isMonitoring ? 'bg-green-50' : 'bg-gray-50'}`}>
+                <MapPin className={`h-5 w-5 ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`} />
+              </div>
+              <div>
+                <h3 className="font-medium text-primary">Auto-Detection</h3>
+                <p className="text-xs text-tertiary">
+                  {isMonitoring ? 'Monitoring your location' : 'Disabled'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={autoDetectionEnabled}
+              onCheckedChange={toggleAutoDetection}
+              className="focus-clean"
+            />
+          </div>
+          
+          {autoDetectionEnabled && (autoEntries > 0 || autoExits > 0) && (
+            <div className="flex items-center space-x-6 pt-3 border-t border-gray-100">
+              <div className="flex items-center space-x-2">
+                <div className="status-dot bg-green-500"></div>
+                <span className="text-sm text-secondary">Entries: {autoEntries}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="status-dot bg-orange-500"></div>
+                <span className="text-sm text-secondary">Exits: {autoExits}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sites Section */}
         {sitesLoading ? (
-          <div className="space-y-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="surface-variant rounded-xl p-4 material-shadow animate-pulse">
-                <div className="h-4 bg-gray-600 rounded w-1/3 mb-2"></div>
-                <div className="h-3 bg-gray-600 rounded w-2/3 mb-4"></div>
+          <div className="space-clean">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="clean-card p-5 animate-pulse">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-1"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
                 <div className="flex space-x-3">
-                  <div className="flex-1 h-12 bg-gray-600 rounded-lg"></div>
-                  <div className="flex-1 h-12 bg-gray-600 rounded-lg"></div>
+                  <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
+                  <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
                 </div>
               </div>
             ))}
           </div>
+        ) : sortedSites.length === 0 ? (
+          <div className="clean-card p-8 text-center">
+            <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <h3 className="font-medium text-primary mb-2">No Sites Available</h3>
+            <p className="text-secondary text-sm mb-4">Add patrol sites to get started</p>
+            <Button 
+              onClick={() => initSitesMutation.mutate()}
+              className="clean-button clean-button-primary"
+              disabled={initSitesMutation.isPending}
+            >
+              {initSitesMutation.isPending ? 'Loading...' : 'Load Default Sites'}
+            </Button>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {sortedSites.map((site) => {
+          <div className="space-clean">
+            {sortedSites.map((site, index) => {
               const lastVisit = getLastVisit(site.id);
               return (
-                <PatrolSiteCard
-                  key={site.id}
-                  site={site}
-                  distance={site.distance}
-                  isWithinGeofence={site.isWithinGeofence}
-                  lastVisit={lastVisit}
-                  onEnter={() => logActionMutation.mutate({ siteId: site.id, action: 'enter' })}
-                  onExit={() => logActionMutation.mutate({ siteId: site.id, action: 'exit' })}
-                  isLoading={logActionMutation.isPending}
-                />
+                <div key={site.id} className="animate-fade-in" 
+                     style={{ animationDelay: `${index * 50}ms` }}>
+                  <PatrolSiteCard
+                    site={site}
+                    distance={site.distance}
+                    isWithinGeofence={site.isWithinGeofence}
+                    lastVisit={lastVisit}
+                    onEnter={() => logActionMutation.mutate({ siteId: site.id, action: 'enter' })}
+                    onExit={() => logActionMutation.mutate({ siteId: site.id, action: 'exit' })}
+                    isLoading={logActionMutation.isPending}
+                  />
+                </div>
               );
             })}
           </div>
         )}
       </main>
 
-      {/* Floating Action Button */}
-      <Button
-        onClick={handleRefresh}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-primary hover:bg-primary/90 text-white rounded-full material-shadow-elevated transition-colors touch-target"
-        size="icon"
-        style={{ zIndex: 1000 }}
-      >
-        <RefreshCw className="h-5 w-5" />
-      </Button>
+      {/* Refresh Button */}
+      <div className="fixed bottom-24 right-6 z-50">
+        <Button
+          onClick={handleRefresh}
+          className="w-12 h-12 bg-white shadow-clean-md hover:shadow-lg border border-gray-200 rounded-full transition-all duration-200 focus-clean touch-target"
+          size="icon"
+        >
+          <RefreshCw className="h-4 w-4 text-gray-600" />
+        </Button>
+      </div>
 
       <BottomNavigation currentRoute="/" />
     </div>
