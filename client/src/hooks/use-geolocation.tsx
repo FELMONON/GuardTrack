@@ -20,8 +20,8 @@ export function useGeolocation() {
 
     const options: PositionOptions = {
       enableHighAccuracy: localStorage.getItem('high-accuracy-gps') !== 'false',
-      timeout: 10000,
-      maximumAge: 60000, // Cache location for 1 minute
+      timeout: 15000, // Increased timeout for better reliability
+      maximumAge: 30000, // Reduced cache age for better accuracy in geofencing
     };
 
     const handleSuccess = (position: GeolocationPosition) => {

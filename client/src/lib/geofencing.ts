@@ -12,7 +12,7 @@ export function calculateDistance(
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371; // Earth's radius in kilometers
+  const R = 6371.0088; // More precise Earth's mean radius in kilometers
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
   
@@ -36,6 +36,7 @@ export function calculateDistance(
  * @param siteLat Site's latitude
  * @param siteLon Site's longitude
  * @param radiusMeters Geofence radius in meters
+ * @param gpsAccuracy Optional GPS accuracy in meters (default: 5m)
  * @returns True if user is within the geofence
  */
 export function isWithinGeofence(
@@ -43,12 +44,17 @@ export function isWithinGeofence(
   userLon: number,
   siteLat: number,
   siteLon: number,
-  radiusMeters: number
+  radiusMeters: number,
+  gpsAccuracy: number = 5
 ): boolean {
   const distanceKm = calculateDistance(userLat, userLon, siteLat, siteLon);
   const distanceMeters = distanceKm * 1000;
   
-  return distanceMeters <= radiusMeters;
+  // Account for GPS accuracy by adding it to the geofence radius
+  // This prevents false negatives when GPS accuracy is poor
+  const effectiveRadius = radiusMeters + gpsAccuracy;
+  
+  return distanceMeters <= effectiveRadius;
 }
 
 /**

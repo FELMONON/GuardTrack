@@ -94,58 +94,68 @@ export default function PatrolSiteCard({
   };
 
   return (
-    <div className={`border rounded-lg transition-all duration-200 ${
+    <div className={`bg-white rounded-xl shadow-sm border transition-all duration-200 ${
       isWithinGeofence 
-        ? 'border-green-200 bg-green-50/50' 
-        : 'border-gray-200 bg-white hover:border-gray-300'
+        ? 'border-green-200 bg-green-50/30 ring-1 ring-green-100' 
+        : 'border-gray-100 hover:shadow-md'
     }`}>
-      {/* Site Header */}
-      <div className="p-4 pb-3">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">{site.name}</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">{site.address}</p>
+      <div className="p-4">
+        {/* Site Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">{site.name}</h3>
+            <p className="text-sm text-gray-500 line-clamp-2">{site.address}</p>
           </div>
-          <div className={`px-3 py-1 rounded-full ${status.bgColor}`}>
+          <div className={`ml-3 px-3 py-1 rounded-full flex-shrink-0 ${status.bgColor}`}>
             <div className="flex items-center space-x-1.5">
               <div className={`w-2 h-2 rounded-full ${status.dotColor}`}></div>
-              <span className={`text-xs font-medium ${status.color}`}>{status.text}</span>
+              <span className={`text-xs font-semibold ${status.color}`}>{status.text}</span>
             </div>
           </div>
         </div>
         
-        {/* Site Info */}
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+        {/* Distance and Last Visit */}
+        <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
           <div className="flex items-center space-x-1">
-            <Navigation className="h-3.5 w-3.5" />
-            <span>{formatDistance(distance)}</span>
+            <Navigation className="h-4 w-4" />
+            <span className="font-medium">{formatDistance(distance)}</span>
           </div>
           <div className="flex items-center space-x-1">
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className="h-4 w-4" />
             <span>{getLastVisitText()}</span>
           </div>
         </div>
-      </div>
-      
-      {/* Action Buttons */}
-      <div className="px-4 pb-4">
-        <div className="grid grid-cols-2 gap-3">
+        
+        {/* Action Buttons */}
+        <div className="flex space-x-3">
           <Button
             onClick={() => handleButtonClick(onEnter)}
             disabled={isLoading}
-            className="h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus-clean touch-target"
+            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active-scale tap-highlight disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <MapPin className="h-4 w-4 mr-2" />
-            Enter
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Processing...</span>
+              </div>
+            ) : (
+              'Check In'
+            )}
           </Button>
           <Button
             onClick={() => handleButtonClick(onExit)}
             disabled={isLoading}
             variant="outline"
-            className="h-11 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-colors focus-clean touch-target"
+            className="flex-1 h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 active:bg-gray-100 font-semibold rounded-lg transition-all duration-200 active-scale tap-highlight disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <MapPin className="h-4 w-4 mr-2" />
-            Exit
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></div>
+                <span>Processing...</span>
+              </div>
+            ) : (
+              'Check Out'
+            )}
           </Button>
         </div>
       </div>

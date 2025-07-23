@@ -13,6 +13,8 @@ interface GeofenceState {
   [siteId: number]: {
     wasInside: boolean;
     lastCheck: number;
+    entryTimer?: NodeJS.Timeout;
+    exitTimer?: NodeJS.Timeout;
   };
 }
 
@@ -20,7 +22,8 @@ export function useGeofenceMonitor(
   location: GeolocationData | null,
   sites: PatrolSite[],
   deviceId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  gpsAccuracy: number = 5
 ) {
   const { startSession, endSession, getActiveSession } = usePatrolSessions(deviceId);
   const { toast } = useToast();
@@ -49,7 +52,8 @@ export function useGeofenceMonitor(
         location.longitude,
         parseFloat(site.latitude),
         parseFloat(site.longitude),
-        site.geofenceRadius
+        site.geofenceRadius,
+        gpsAccuracy
       );
 
       // Initialize state for new sites
@@ -69,43 +73,59 @@ export function useGeofenceMonitor(
 
       // Check for geofence entry
       if (!state.wasInside && currentlyInside) {
+        // Clear any existing exit timer
+        if (state.exitTimer) {
+          clearTimeout(state.exitTimer);
+          state.exitTimer = undefined;
+        }
+        
         // Just entered geofence - start timer
         state.wasInside = true;
         state.lastCheck = now;
         
         // Set timer for delayed entry
-        setTimeout(() => {
+        state.entryTimer = setTimeout(() => {
           // Check if still inside after delay
           if (location && isWithinGeofence(
             location.latitude,
             location.longitude,
             parseFloat(site.latitude),
             parseFloat(site.longitude),
-            site.geofenceRadius
+            site.geofenceRadius,
+            gpsAccuracy
           )) {
             handleAutoEntry(site);
           }
+          state.entryTimer = undefined;
         }, ENTRY_DELAY);
       }
       
       // Check for geofence exit
       else if (state.wasInside && !currentlyInside) {
+        // Clear any existing entry timer
+        if (state.entryTimer) {
+          clearTimeout(state.entryTimer);
+          state.entryTimer = undefined;
+        }
+        
         // Just left geofence - start timer
         state.wasInside = false;
         state.lastCheck = now;
         
         // Set timer for delayed exit
-        setTimeout(() => {
+        state.exitTimer = setTimeout(() => {
           // Check if still outside after delay
           if (location && !isWithinGeofence(
             location.latitude,
             location.longitude,
             parseFloat(site.latitude),
             parseFloat(site.longitude),
-            site.geofenceRadius
+            site.geofenceRadius,
+            gpsAccuracy
           )) {
             handleAutoExit(site);
           }
+          state.exitTimer = undefined;
         }, EXIT_DELAY);
       }
       
@@ -113,6 +133,20 @@ export function useGeofenceMonitor(
       state.lastCheck = now;
     });
   }, [location, sites, enabled]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(geofenceState.current).forEach(state => {
+        if (state.entryTimer) {
+          clearTimeout(state.entryTimer);
+        }
+        if (state.exitTimer) {
+          clearTimeout(state.exitTimer);
+        }
+      });
+    };
+  }, []);
 
   const handleAutoEntry = async (site: PatrolSite) => {
     try {

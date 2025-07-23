@@ -9,10 +9,8 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
   const [location] = useLocation();
 
   const navItems = [
-    { path: "/", label: "Home", icon: Home },
-    { path: "/map", label: "Map", icon: Map },
-    { path: "/logs", label: "Logs", icon: ClipboardList },
-    { path: "/shift", label: "Shift", icon: Moon },
+    { path: "/", label: "Sites", icon: Home },
+    { path: "/logs", label: "History", icon: ClipboardList },
     { path: "/settings", label: "Settings", icon: Settings },
   ];
 
@@ -24,11 +22,8 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
   };
 
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 surface-variant material-shadow-elevated border-t border-gray-700"
-      style={{ maxWidth: '390px', margin: '0 auto' }}
-    >
-      <div className="flex items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom">
+      <div className="flex items-center justify-around py-2 px-4">
         {navItems.map(({ path, label, icon: Icon }) => {
           const isActive = location === path;
           
@@ -36,14 +31,14 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
             <Link key={path} href={path}>
               <button 
                 onClick={handleNavClick}
-                className={`flex flex-col items-center py-2 px-3 touch-target transition-colors ${
+                className={`flex flex-col items-center py-3 px-4 min-w-[64px] transition-all duration-200 rounded-lg ${
                   isActive 
-                    ? 'text-primary' 
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="text-lg mb-1" size={20} />
-                <span className={`text-xs ${isActive ? 'font-medium' : ''}`}>
+                <Icon size={22} className="mb-1" />
+                <span className={`text-xs ${isActive ? 'font-semibold' : 'font-medium'}`}>
                   {label}
                 </span>
               </button>
